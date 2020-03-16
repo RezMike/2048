@@ -7,16 +7,17 @@ enum class Number(val value: Int, val color: RGBA) {
     THREE(16, RGBA(254, 150, 92)),
     FOUR(32, RGBA(247, 123, 97)),
     FIVE(64, RGBA(235, 88, 55)),
-    SIX(128, RGBA(244, 216, 109)),
-    SEVEN(256, RGBA(238, 204, 102)),
-    EIGHT(512, RGBA(235, 200, 82)),
-    NINE(1024, RGBA(244, 216, 109)),
-    TEN(2048, RGBA(240, 194, 48)),
+    SIX(128, RGBA(236, 220, 146)),
+    SEVEN(256, RGBA(240, 212, 121)),
+    EIGHT(512, RGBA(244, 206, 96)),
+    NINE(1024, RGBA(248, 200, 71)),
+    TEN(2048, RGBA(256, 194, 46)),
     ELEVEN(4096, RGBA(104, 130, 249)),
     TWELVE(8192, RGBA(51, 85, 247)),
     THIRTEEN(16384, RGBA(10, 47, 222)),
     FOURTEEN(32768, RGBA(9, 43, 202)),
-    FIFTEEN(65536, RGBA(181, 37, 188));
+    FIFTEEN(65536, RGBA(181, 37, 188)),
+    SIXTEEN(131072, RGBA(166, 34, 172));
 
     fun next() = values()[(ordinal + 1) % values().size]
 }

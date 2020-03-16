@@ -4,13 +4,24 @@ import com.soywiz.korev.Key
 import com.soywiz.korge.Korge
 import com.soywiz.korge.input.onKeyDown
 import com.soywiz.korge.tween.moveTo
-import com.soywiz.korge.view.*
-import com.soywiz.korim.color.Colors
+import com.soywiz.korge.view.Container
+import com.soywiz.korge.view.graphics
+import com.soywiz.korge.view.position
 import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.font.BitmapFont
+import com.soywiz.korim.font.readBitmapFont
+import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.vector.roundRect
 import com.soywiz.korma.interpolation.Easing
+import kotlin.collections.forEach
+import kotlin.collections.forEachIndexed
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.plusAssign
+import kotlin.collections.set
 import kotlin.random.Random
 
+var font: BitmapFont? = null
 var cellSize: Double = 0.0
 var paddingLeft: Double = 0.0
 var paddingTop: Double = 0.0
@@ -25,9 +36,11 @@ fun numberFor(blockId: Int) = blocks[blockId]!!.number
 fun deleteBlock(nextId: Int) = blocks.remove(nextId)?.removeFromParent()
 
 suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 240)) {
-    cellSize = root.height / 5
+    font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
+
+    cellSize = root.width / 5
     val fieldSize = 50 + 4 * cellSize
-    paddingLeft = (root.height - fieldSize) / 2
+    paddingLeft = (root.width - fieldSize) / 2
     paddingTop = 100.0
 
     graphics {
@@ -45,7 +58,10 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
         }
     }
 
-    generateBlock()
+    Number.values().forEachIndexed { i, num ->
+        createNewBlock(num, Position(i % 4, i / 4))
+    }
+    //generateBlock()
 
     onKeyDown {
         when (it.key) {
