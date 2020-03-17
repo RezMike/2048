@@ -14,7 +14,7 @@ fun PositionMap.getOrNull(x: Int, y: Int) = when {
     else -> null
 }
 
-fun PositionMap.getFirstFreePositionFrom(direction: Direction, line: Int): Position? {
+fun PositionMap.getNotEmptyPositionFrom(direction: Direction, line: Int): Position? {
     when (direction) {
         Direction.LEFT -> for (i in 0..3) getOrNull(i, line)?.let { return it }
         Direction.RIGHT -> for (i in 3 downTo 0) getOrNull(i, line)?.let { return it }

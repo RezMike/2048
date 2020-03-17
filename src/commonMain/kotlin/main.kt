@@ -2,22 +2,19 @@ import com.soywiz.kds.Array2
 import com.soywiz.klock.seconds
 import com.soywiz.korev.Key
 import com.soywiz.korge.Korge
+import com.soywiz.korge.animate.animateParallel
 import com.soywiz.korge.input.onKeyDown
-import com.soywiz.korge.tween.moveTo
 import com.soywiz.korge.view.Container
+import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.graphics
 import com.soywiz.korge.view.position
 import com.soywiz.korim.color.RGBA
 import com.soywiz.korim.font.BitmapFont
 import com.soywiz.korim.font.readBitmapFont
+import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.vector.roundRect
 import com.soywiz.korma.interpolation.Easing
-import kotlin.collections.forEach
-import kotlin.collections.forEachIndexed
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.plusAssign
 import kotlin.collections.set
 import kotlin.random.Random
 
@@ -58,10 +55,7 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
         }
     }
 
-    Number.values().forEachIndexed { i, num ->
-        createNewBlock(num, Position(i % 4, i / 4))
-    }
-    //generateBlock()
+    generateBlock()
 
     onKeyDown {
         when (it.key) {
@@ -77,48 +71,61 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
     }
 }
 
-suspend fun Container.moveBlocksTo(direction: Direction) {
+fun Stage.moveBlocksTo(direction: Direction) {
     val moves = mutableListOf<Pair<Int, Position>>()
+    val merges = mutableListOf<Triple<Int, Int, Position>>()
+    val oldMap = map.copy(data = map.data.copyOf())
     val newMap = Array2(4, 4, -1)
     var columnNumber = 3
     var newPos: Position
     // TODO: implement different directions
     for (rowNumber in 0..3) {
-        var curPos = map.getFirstFreePositionFrom(direction, rowNumber)
+        var curPos = map.getNotEmptyPositionFrom(direction, rowNumber)
         while (curPos != null) {
             newPos = Position(columnNumber--, rowNumber)
             val curId = map[curPos.x, curPos.y]
             map[curPos.x, curPos.y] = -1
 
-            val nextPos = map.getFirstFreePositionFrom(direction, rowNumber)
+            val nextPos = map.getNotEmptyPositionFrom(direction, rowNumber)
             val nextId = nextPos?.let { map[it.x, it.y] }
             //two blocks are equal
             if (nextId != null && numberFor(curId) == numberFor(nextId)) {
                 //merge these blocks
                 map[nextPos.x, nextPos.y] = -1
-                val newId = createNewBlock(numberFor(curId).next(), newPos)
-                newMap[newPos.x, newPos.y] = newId
-                deleteBlock(curId)
-                deleteBlock(nextId)
-                moves += curId to newPos
-                moves += nextId to newPos
+                newMap[newPos.x, newPos.y] = curId
+                merges += Triple(curId, nextId, newPos)
             } else {
                 //add old block
                 newMap[newPos.x, newPos.y] = curId
-                moves += curId to newPos
+                moves += Pair(curId, newPos)
             }
-            curPos = map.getFirstFreePositionFrom(direction, rowNumber)
+            curPos = map.getNotEmptyPositionFrom(direction, rowNumber)
         }
         columnNumber = 3
     }
 
-    if (map != newMap) {
-        // TODO: correct animation
-        moves.forEach { (id, pos) ->
-            blocks[id]?.moveTo(columnX(pos.x), rowY(pos.y), 0.2.seconds, Easing.LINEAR)
+    if (oldMap != newMap) launchImmediately {
+        animateParallel {
+            moves.forEach { (id, pos) ->
+                blocks[id]!!.moveTo(columnX(pos.x), rowY(pos.y), 0.2.seconds, Easing.LINEAR)
+            }
+            merges.forEach { (id1, id2, pos) ->
+                parallel {
+                    blocks[id1]!!.moveTo(columnX(pos.x), rowY(pos.y), 0.2.seconds, Easing.LINEAR)
+                    blocks[id2]!!.moveTo(columnX(pos.x), rowY(pos.y), 0.2.seconds, Easing.LINEAR)
+                    onComplete {
+                        val nextNumber = numberFor(id1).next()
+                        deleteBlock(id1)
+                        deleteBlock(id2)
+                        createNewBlock(id1, nextNumber, pos)
+                    }
+                }
+            }
+            onComplete {
+                map = newMap
+                generateBlock()
+            }
         }
-        map = newMap
-        generateBlock()
     }
 }
 
@@ -131,8 +138,11 @@ fun Container.generateBlock() {
 
 var freeId = 0
 
-fun Container.createNewBlock(number: Number, position: Position = Position(0, 0)): Int {
-    val id = freeId++
+fun Container.createNewBlock(id: Int, number: Number, position: Position): Int {
     blocks[id] = block(number).position(columnX(position.x), rowY(position.y))
     return id
+}
+
+fun Container.createNewBlock(number: Number, position: Position): Int {
+    return createNewBlock(freeId++, number, position)
 }
