@@ -33,7 +33,7 @@ fun PositionMap.getRandomFreePosition(): Position? {
         if (value == -1) {
             current++
             if (current == chosen) {
-                return Position(i / 4, i % 4)
+                return Position(i % 4, i / 4)
             }
         }
     }
