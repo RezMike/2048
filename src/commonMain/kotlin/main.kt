@@ -4,6 +4,7 @@ import com.soywiz.korev.Key
 import com.soywiz.korge.Korge
 import com.soywiz.korge.animate.*
 import com.soywiz.korge.input.onKeyDown
+import com.soywiz.korge.tween.*
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.Stage
 import com.soywiz.korge.view.graphics
@@ -31,6 +32,8 @@ val blocks = mutableMapOf<Int, Block>()
 
 fun numberFor(blockId: Int) = blocks[blockId]!!.number
 fun deleteBlock(blockId: Int) = blocks.remove(blockId)!!.removeFromParent()
+
+var animationRunning = false
 
 suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 240)) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
@@ -72,6 +75,7 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
 }
 
 fun Stage.moveBlocksTo(direction: Direction) {
+    if (animationRunning) return
     val moves = mutableListOf<Pair<Int, Position>>()
     val merges = mutableListOf<Triple<Int, Int, Position>>()
     val oldMap = map.copy(data = map.data.copyOf())
@@ -115,6 +119,7 @@ fun Stage.moveBlocksTo(direction: Direction) {
     }
 
     if (oldMap != newMap) launchImmediately {
+        animationRunning = true
         animateSequence {
             parallel {
                 moves.forEach { (id, pos) ->
@@ -131,6 +136,7 @@ fun Stage.moveBlocksTo(direction: Direction) {
                             deleteBlock(id1)
                             deleteBlock(id2)
                             createNewBlockWithId(id1, nextNumber, pos)
+                            animateScale(blocks[id1]!!)
                         }
                     }
                 }
@@ -138,13 +144,32 @@ fun Stage.moveBlocksTo(direction: Direction) {
             block {
                 map = newMap
                 generateBlock()
-                println("after generate")
-                println(map)
+                animationRunning = false
             }
         }
     } else {
         map = newMap
     }
+}
+
+fun Animator.animateScale(block: Block) {
+    val x = block.x
+    val y = block.y
+    val scale = block.scale
+    tween(
+            block::x[x - 4],
+            block::y[y - 4],
+            block::scale[scale + 0.1],
+            time = 0.1.seconds,
+            easing = Easing.LINEAR
+    )
+    tween(
+            block::x[x],
+            block::y[y],
+            block::scale[scale],
+            time = 0.1.seconds,
+            easing = Easing.LINEAR
+    )
 }
 
 fun Container.generateBlock() {
