@@ -1,23 +1,19 @@
-import com.soywiz.kds.Array2
+import com.soywiz.kds.*
 import com.soywiz.klock.*
-import com.soywiz.korev.Key
-import com.soywiz.korge.Korge
+import com.soywiz.korev.*
+import com.soywiz.korge.*
 import com.soywiz.korge.animate.*
-import com.soywiz.korge.input.onKeyDown
+import com.soywiz.korge.input.*
 import com.soywiz.korge.tween.*
-import com.soywiz.korge.view.Container
-import com.soywiz.korge.view.Stage
-import com.soywiz.korge.view.graphics
-import com.soywiz.korge.view.position
-import com.soywiz.korim.color.RGBA
-import com.soywiz.korim.font.BitmapFont
-import com.soywiz.korim.font.readBitmapFont
-import com.soywiz.korio.async.launchImmediately
-import com.soywiz.korio.file.std.resourcesVfs
-import com.soywiz.korma.geom.vector.roundRect
-import com.soywiz.korma.interpolation.Easing
+import com.soywiz.korge.view.*
+import com.soywiz.korim.color.*
+import com.soywiz.korim.font.*
+import com.soywiz.korio.async.*
+import com.soywiz.korio.file.std.*
+import com.soywiz.korma.geom.vector.*
+import com.soywiz.korma.interpolation.*
 import kotlin.collections.set
-import kotlin.random.Random
+import kotlin.random.*
 
 var font: BitmapFont? = null
 var cellSize: Double = 0.0
@@ -136,6 +132,8 @@ fun Stage.moveBlocksTo(direction: Direction) {
                             deleteBlock(id1)
                             deleteBlock(id2)
                             createNewBlockWithId(id1, nextNumber, pos)
+                        }
+                        sequenceLazy {
                             animateScale(blocks[id1]!!)
                         }
                     }
