@@ -1,10 +1,10 @@
-import com.soywiz.kds.*
 import com.soywiz.klock.*
 import com.soywiz.korev.*
 import com.soywiz.korge.*
 import com.soywiz.korge.animate.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.tween.*
+import com.soywiz.korge.ui.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
@@ -16,6 +16,7 @@ import kotlin.collections.set
 import kotlin.random.*
 
 var font: BitmapFont? = null
+var fieldSize: Double = 0.0
 var cellSize: Double = 0.0
 var paddingLeft: Double = 0.0
 var paddingTop: Double = 0.0
@@ -30,18 +31,18 @@ fun numberFor(blockId: Int) = blocks[blockId]!!.number
 fun deleteBlock(blockId: Int) = blocks.remove(blockId)!!.removeFromParent()
 
 var animationRunning = false
+var isGameOver = false
 
 suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 240)) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
     cellSize = root.width / 5
-    val fieldSize = 50 + 4 * cellSize
+    fieldSize = 50 + 4 * cellSize
     paddingLeft = (root.width - fieldSize) / 2
     paddingTop = 100.0
 
     graphics {
-        x = paddingLeft
-        y = paddingTop
+        position(paddingLeft, paddingTop)
         fill(RGBA(185, 174, 160)) {
             roundRect(0, 0, fieldSize, fieldSize, 5)
         }
@@ -62,9 +63,6 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
             Key.RIGHT -> moveBlocksTo(Direction.RIGHT)
             Key.UP -> moveBlocksTo(Direction.TOP)
             Key.DOWN -> moveBlocksTo(Direction.BOTTOM)
-            //Key.LEFT -> block1.tween(block1::x[columnX[0]], time = 0.2.seconds, easing = Easing.LINEAR)
-            //Key.UP -> block1.tween(block1::y[rowY[0]], time = 0.2.seconds, easing = Easing.LINEAR)
-            //Key.DOWN -> block1.tween(block1::y[rowY[3]], time = 0.2.seconds, easing = Easing.LINEAR)
             else -> Unit
         }
     }
@@ -72,10 +70,15 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
 
 fun Stage.moveBlocksTo(direction: Direction) {
     if (animationRunning) return
+    if (!map.hasAvailableMoves()) {
+        if (!isGameOver) showGameOver()
+        isGameOver = true
+        return
+    }
     val moves = mutableListOf<Pair<Int, Position>>()
     val merges = mutableListOf<Triple<Int, Int, Position>>()
     val oldMap = map.copy(data = map.data.copyOf())
-    val newMap = Array2(4, 4, -1)
+    val newMap = PositionMap(4, 4, -1)
     val startIndex = when (direction) {
         Direction.LEFT, Direction.TOP -> 0
         Direction.RIGHT, Direction.BOTTOM -> 3
@@ -170,9 +173,41 @@ fun Animator.animateScale(block: Block) {
     )
 }
 
+fun Container.showGameOver() = container {
+    position(paddingLeft, paddingTop)
+
+    graphics {
+        fill(Colors.WHITE, 0.2) {
+            roundRect(0, 0, fieldSize, fieldSize, 5.0, 5.0)
+        }
+    }
+    text("Game Over", 32.0, Colors.BLACK) {
+        filtering = false
+        centerBetween(0, 0, fieldSize, fieldSize)
+        y -= 60
+    }
+    val textSkin = DefaultTextSkin.copy(backColor = Colors.TRANSPARENT_WHITE)
+    uiText("Try again", skin = textSkin) {
+        centerBetween(0, 0, fieldSize, fieldSize)
+        y += 20
+        onClick {
+            this@showGameOver.restart()
+            this@container.removeFromParent()
+        }
+    }
+}
+
+fun Container.restart() {
+    isGameOver = false
+    map = PositionMap(4, 4, -1)
+    blocks.values.forEach { it.removeFromParent() }
+    blocks.clear()
+    generateBlock()
+}
+
 fun Container.generateBlock() {
     val position = map.getRandomFreePosition() ?: return
-    val number = if (Random.nextDouble() < 0.7) Number.ZERO else Number.ONE
+    val number = if (Random.nextDouble() < 0.9) Number.ZERO else Number.ONE
     val newId = createNewBlock(number, position)
     map[position.x, position.y] = newId
 }

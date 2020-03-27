@@ -1,7 +1,7 @@
 import Number.*
 import com.soywiz.korge.view.*
-import com.soywiz.korim.color.Colors
-import com.soywiz.korma.geom.vector.roundRect
+import com.soywiz.korim.color.*
+import com.soywiz.korma.geom.vector.*
 
 fun Container.block(number: Number) = Block(number).addTo(this)
 
@@ -29,8 +29,4 @@ private fun textSizeFor(number: Number) = when (number) {
     NINE, TEN, ELEVEN, TWELVE -> cellSize * 2 / 5
     THIRTEEN, FOURTEEN, FIFTEEN -> cellSize * 7 / 20
     SIXTEEN -> cellSize * 3 / 10
-}
-
-private fun View.centerBetween(x0: Double, y0: Double, x1: Double, y1: Double) {
-    position((x1 - x0 - width) / 2, (y1 - y0 - height) / 2)
 }

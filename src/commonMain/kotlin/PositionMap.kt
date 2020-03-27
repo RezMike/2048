@@ -1,5 +1,5 @@
-import com.soywiz.kds.Array2
-import kotlin.random.Random
+import com.soywiz.kds.*
+import kotlin.random.*
 
 class Position(val x: Int, val y: Int)
 
@@ -7,12 +7,13 @@ enum class Direction {
     LEFT, RIGHT, TOP, BOTTOM
 }
 
-typealias PositionMap = Array2<Int>
+typealias PositionMap = IntArray2
 
-fun PositionMap.getOrNull(x: Int, y: Int) = when {
-    get(x, y) != -1 -> Position(x, y)
-    else -> null
-}
+val PositionMap.indices get() = List(width * height) { it % width to it / width }
+
+fun PositionMap.getOrNull(x: Int, y: Int) = if (get(x, y) != -1) Position(x, y) else null
+
+fun PositionMap.getNumber(x: Int, y: Int) = tryGet(x, y)?.let { blocks[it]?.number ?: -1 } ?: -1
 
 fun PositionMap.getNotEmptyPositionFrom(direction: Direction, line: Int): Position? {
     when (direction) {
@@ -38,4 +39,15 @@ fun PositionMap.getRandomFreePosition(): Position? {
         }
     }
     return null
+}
+
+fun PositionMap.hasAdjacentEqualPosition(x: Int, y: Int) = getNumber(x, y).let {
+    it == getNumber(x - 1, y) || it == getNumber(x + 1, y) || it == getNumber(x, y - 1) || it == getNumber(x, y + 1)
+}
+
+fun PositionMap.hasAvailableMoves(): Boolean {
+    indices.forEach { (x, y) ->
+        if (hasAdjacentEqualPosition(x, y)) return true
+    }
+    return false
 }
