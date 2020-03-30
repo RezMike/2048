@@ -24,7 +24,7 @@ var paddingTop: Double = 0.0
 fun columnX(number: Int) = paddingLeft + 10 + (cellSize + 10) * number
 fun rowY(number: Int) = paddingTop + 10 + (cellSize + 10) * number
 
-var map = PositionMap(4, 4, -1)
+var map = PositionMap()
 val blocks = mutableMapOf<Int, Block>()
 
 fun numberFor(blockId: Int) = blocks[blockId]!!.number
@@ -77,8 +77,8 @@ fun Stage.moveBlocksTo(direction: Direction) {
     }
     val moves = mutableListOf<Pair<Int, Position>>()
     val merges = mutableListOf<Triple<Int, Int, Position>>()
-    val oldMap = map.copy(data = map.data.copyOf())
-    val newMap = PositionMap(4, 4, -1)
+    val oldMap = map.copy()
+    val newMap = PositionMap()
     val startIndex = when (direction) {
         Direction.LEFT, Direction.TOP -> 0
         Direction.RIGHT, Direction.BOTTOM -> 3
@@ -199,7 +199,7 @@ fun Container.showGameOver() = container {
 
 fun Container.restart() {
     isGameOver = false
-    map = PositionMap(4, 4, -1)
+    map = PositionMap()
     blocks.values.forEach { it.removeFromParent() }
     blocks.clear()
     generateBlock()
