@@ -17,7 +17,7 @@ class Block(val number: Number) : Container() {
                 else -> Colors.WHITE
             }
             text(number.value.toString(), textSizeFor(number), textColor, font!!).apply {
-                centerBetween(0.0, 0.0, cellSize, cellSize)
+                centerBetween(0, 0, cellSize, cellSize)
             }
         }
     }
