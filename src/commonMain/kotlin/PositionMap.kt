@@ -57,4 +57,8 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
     }
 
     fun copy() = PositionMap(array.copy(data = array.data.copyOf()))
+
+    override fun equals(other: Any?): Boolean {
+        return (other is PositionMap) && this.array.data.contentEquals(other.array.data)
+    }
 }
