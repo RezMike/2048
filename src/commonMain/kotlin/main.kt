@@ -4,6 +4,7 @@ import com.soywiz.korge.*
 import com.soywiz.korge.animate.*
 import com.soywiz.korge.html.*
 import com.soywiz.korge.input.*
+import com.soywiz.korge.service.storage.*
 import com.soywiz.korge.tween.*
 import com.soywiz.korge.ui.*
 import com.soywiz.korge.view.*
@@ -11,6 +12,7 @@ import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.std.*
+import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
 import com.soywiz.korma.interpolation.*
 import kotlin.collections.set
@@ -31,6 +33,11 @@ val blocks = mutableMapOf<Int, Block>()
 fun numberFor(blockId: Int) = blocks[blockId]!!.number
 fun deleteBlock(blockId: Int) = blocks.remove(blockId)!!.removeFromParent()
 
+var score = 0
+var best = NativeStorage.getOrNull("best")?.toInt() ?: 0
+val updateScore = Signal<Int>()
+val updateBest = Signal<Int>()
+
 var freeId = 0
 var animationRunning = false
 var isGameOver = false
@@ -38,11 +45,63 @@ var isGameOver = false
 suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 240)) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
+    updateScore {
+        score = it
+        if (it > best) updateBest(it)
+    }
+    updateBest {
+        best = it
+        NativeStorage["best"] = it.toString()
+    }
+
     cellSize = root.width / 5
     fieldSize = 50 + 4 * cellSize
     paddingLeft = (root.width - fieldSize) / 2
-    paddingTop = 100.0
+    paddingTop = 150.0
 
+    graphics {
+        position(paddingLeft, 30)
+        fill(RGBA(237, 196, 3)) {
+            roundRect(0, 0, cellSize, cellSize, 5)
+        }
+        text("2048", cellSize * 0.5, Colors.WHITE, font!!).centerBetween(0, 0, cellSize, cellSize)
+    }
+    graphics {
+        position(paddingLeft + cellSize * 1.3, 30)
+        fill(RGBA(187, 174, 158)) {
+            roundRect(0, 0, cellSize * 1.5, cellSize * 0.8, 5)
+        }
+        text("SCORE", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
+            centerXBetween(0, cellSize * 1.5)
+            y = 5.0
+        }
+        text(score.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+            setTextBounds(Rectangle(0.0, 0.0, cellSize * 1.5, cellSize - 24.0))
+            format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
+            y = 12.0
+            updateScore {
+                text = it.toString()
+            }
+        }
+    }
+    graphics {
+        position(paddingLeft + cellSize * 3, 30)
+        fill(RGBA(187, 174, 158)) {
+            roundRect(0, 0, cellSize * 1.5, cellSize * 0.8, 5)
+        }
+        text("BEST", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
+            y = 5.0
+            centerXBetween(0, cellSize * 1.5)
+        }
+        text(best.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+            setTextBounds(Rectangle(0.0, 0.0, cellSize * 1.5, cellSize - 24.0))
+            format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
+            y = 12.0
+            updateBest {
+                text = it.toString()
+            }
+        }
+    }
     graphics {
         position(paddingLeft, paddingTop)
         fill(RGBA(185, 174, 160)) {
@@ -83,11 +142,10 @@ fun Stage.moveBlocksTo(direction: Direction) {
         return
     }
 
-    val newMap = PositionMap()
     val moves = mutableListOf<Pair<Int, Position>>()
     val merges = mutableListOf<Triple<Int, Int, Position>>()
 
-    calculateNewMap(map.copy(), newMap, direction, moves, merges)
+    val newMap = calculateNewMap(map.copy(), direction, moves, merges)
 
     if (map != newMap) {
         animationRunning = true
@@ -95,6 +153,11 @@ fun Stage.moveBlocksTo(direction: Direction) {
             map = newMap
             generateBlock()
             animationRunning = false
+            var points = 0
+            merges.forEach {
+                points += numberFor(it.first).value
+            }
+            updateScore(score + points)
         }
     } else {
         map = newMap
@@ -103,11 +166,11 @@ fun Stage.moveBlocksTo(direction: Direction) {
 
 fun calculateNewMap(
         map: PositionMap,
-        newMap: PositionMap,
         direction: Direction,
         moves: MutableList<Pair<Int, Position>>,
         merges: MutableList<Triple<Int, Int, Position>>
-) {
+): PositionMap {
+    val newMap = PositionMap()
     val startIndex = when (direction) {
         Direction.LEFT, Direction.TOP -> 0
         Direction.RIGHT, Direction.BOTTOM -> 3
@@ -145,6 +208,7 @@ fun calculateNewMap(
             curPos = map.getNotEmptyPositionFrom(direction, line)
         }
     }
+    return newMap
 }
 
 fun Stage.showAnimation(
