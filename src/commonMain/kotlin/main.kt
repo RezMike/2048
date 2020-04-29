@@ -54,9 +54,9 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
         NativeStorage["best"] = it.toString()
     }
 
-    cellSize = root.width / 5
+    cellSize = views.virtualWidth / 5.0
     fieldSize = 50 + 4 * cellSize
-    paddingLeft = (root.width - fieldSize) / 2
+    paddingLeft = (views.virtualWidth - fieldSize) / 2
     paddingTop = 150.0
 
     graphics {
