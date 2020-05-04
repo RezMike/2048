@@ -33,10 +33,8 @@ val blocks = mutableMapOf<Int, Block>()
 fun numberFor(blockId: Int) = blocks[blockId]!!.number
 fun deleteBlock(blockId: Int) = blocks.remove(blockId)!!.removeFromParent()
 
-var score = 0
-var best = NativeStorage.getOrNull("best")?.toInt() ?: 0
-val updateScore = Signal<Int>()
-val updateBest = Signal<Int>()
+val score = ObservableProperty(0)
+val best = ObservableProperty(NativeStorage.getOrNull("best")?.toInt() ?: 0)
 
 var freeId = 0
 var animationRunning = false
@@ -45,12 +43,10 @@ var isGameOver = false
 suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 240)) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
-    updateScore {
-        score = it
-        if (it > best) updateBest(it)
+    score.observe {
+        if (it > best.value) best.update(it)
     }
-    updateBest {
-        best = it
+    best.observe {
         NativeStorage["best"] = it.toString()
     }
 
@@ -75,11 +71,11 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
             centerXBetween(0, cellSize * 1.5)
             y = 5.0
         }
-        text(score.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+        text(score.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
             setTextBounds(Rectangle(0.0, 0.0, cellSize * 1.5, cellSize - 24.0))
             format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
             y = 12.0
-            updateScore {
+            score {
                 text = it.toString()
             }
         }
@@ -93,11 +89,11 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
             y = 5.0
             centerXBetween(0, cellSize * 1.5)
         }
-        text(best.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+        text(best.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
             setTextBounds(Rectangle(0.0, 0.0, cellSize * 1.5, cellSize - 24.0))
             format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
             y = 12.0
-            updateBest {
+            best {
                 text = it.toString()
             }
         }
@@ -157,7 +153,7 @@ fun Stage.moveBlocksTo(direction: Direction) {
             merges.forEach {
                 points += numberFor(it.first).value
             }
-            updateScore(score + points)
+            score.update(score.value + points)
         }
     } else {
         map = newMap
