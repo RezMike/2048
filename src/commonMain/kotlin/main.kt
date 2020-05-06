@@ -114,6 +114,15 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
 
     generateBlock()
 
+    onSwipe(20) {
+        when (it.direction) {
+            SwipeDirection.LEFT -> moveBlocksTo(Direction.LEFT)
+            SwipeDirection.RIGHT -> moveBlocksTo(Direction.RIGHT)
+            SwipeDirection.TOP -> moveBlocksTo(Direction.TOP)
+            SwipeDirection.BOTTOM -> moveBlocksTo(Direction.BOTTOM)
+        }
+    }
+
     onKeyDown {
         when (it.key) {
             Key.LEFT -> moveBlocksTo(Direction.LEFT)
