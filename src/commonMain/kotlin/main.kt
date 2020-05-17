@@ -55,54 +55,11 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
     paddingLeft = (views.virtualWidth - fieldSize) / 2
     paddingTop = 150.0
 
-    graphics {
-        position(paddingLeft, 30)
-        fill(RGBA(237, 196, 3)) {
-            roundRect(0, 0, cellSize, cellSize, 5)
-        }
-        text("2048", cellSize * 0.5, Colors.WHITE, font!!).centerBetween(0, 0, cellSize, cellSize)
-    }
-    graphics {
-        position(paddingLeft + cellSize * 1.3, 30)
-        fill(RGBA(187, 174, 158)) {
-            roundRect(0, 0, cellSize * 1.5, cellSize * 0.8, 5)
-        }
-        text("SCORE", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
-            centerXBetween(0, cellSize * 1.5)
-            y = 5.0
-        }
-        text(score.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
-            setTextBounds(Rectangle(0.0, 0.0, cellSize * 1.5, cellSize - 24.0))
-            format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
-            y = 12.0
-            score {
-                text = it.toString()
-            }
-        }
-    }
-    graphics {
-        position(paddingLeft + cellSize * 3, 30)
-        fill(RGBA(187, 174, 158)) {
-            roundRect(0, 0, cellSize * 1.5, cellSize * 0.8, 5)
-        }
-        text("BEST", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
-            y = 5.0
-            centerXBetween(0, cellSize * 1.5)
-        }
-        text(best.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
-            setTextBounds(Rectangle(0.0, 0.0, cellSize * 1.5, cellSize - 24.0))
-            format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
-            y = 12.0
-            best {
-                text = it.toString()
-            }
-        }
+    val bgField = roundRect(fieldSize, fieldSize, 5, color = RGBA(185, 174, 160)) {
+        position(paddingLeft, paddingTop)
     }
     graphics {
         position(paddingLeft, paddingTop)
-        fill(RGBA(185, 174, 160)) {
-            roundRect(0, 0, fieldSize, fieldSize, 5)
-        }
         fill(RGBA(206, 192, 178)) {
             for (i in 0..3) {
                 for (j in 0..3) {
@@ -112,9 +69,50 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
         }
     }
 
+    val bg2048 = roundRect(cellSize, cellSize, 5, color = RGBA(237, 196, 3)) {
+        position(paddingLeft, 30)
+    }
+    text("2048", cellSize * 0.5, Colors.WHITE, font!!).centerOn(bg2048)
+
+    val bgBest = roundRect(cellSize * 1.5, cellSize * 0.8, 5, color = RGBA(187, 174, 158)) {
+        alignRightToRightOf(bgField)
+        alignTopToTopOf(bg2048)
+    }
+    text("BEST", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
+        centerXOn(bgBest)
+        alignTopToTopOf(bgBest, 5)
+    }
+    text(best.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+        setTextBounds(Rectangle(0.0, 0.0, bgBest.width, cellSize - 24.0))
+        format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
+        alignTopToTopOf(bgBest, 12)
+        centerXOn(bgBest)
+        best {
+            text = it.toString()
+        }
+    }
+
+    val bgScore = roundRect(cellSize * 1.5, cellSize * 0.8, 5, color = RGBA(187, 174, 158)) {
+        alignRightToLeftOf(bgBest, 24)
+        alignTopToTopOf(bgBest)
+    }
+    text("SCORE", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
+        centerXOn(bgScore)
+        alignTopToTopOf(bgScore, 5)
+    }
+    text(score.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+        setTextBounds(Rectangle(0.0, 0.0, bgScore.width, cellSize - 24.0))
+        format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
+        centerXOn(bgScore)
+        alignTopToTopOf(bgScore, 12)
+        score {
+            text = it.toString()
+        }
+    }
+
     generateBlock()
 
-    onSwipe(20) {
+    onSwipe(20.0) {
         when (it.direction) {
             SwipeDirection.LEFT -> moveBlocksTo(Direction.LEFT)
             SwipeDirection.RIGHT -> moveBlocksTo(Direction.RIGHT)
@@ -311,6 +309,7 @@ fun Container.restart() {
     map = PositionMap()
     blocks.values.forEach { it.removeFromParent() }
     blocks.clear()
+    score.update(0)
     generateBlock()
 }
 
