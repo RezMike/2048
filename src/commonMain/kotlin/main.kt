@@ -10,6 +10,7 @@ import com.soywiz.korge.ui.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
+import com.soywiz.korim.format.*
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korma.geom.*
@@ -28,6 +29,7 @@ fun columnX(number: Int) = paddingLeft + 10 + (cellSize + 10) * number
 fun rowY(number: Int) = paddingTop + 10 + (cellSize + 10) * number
 
 var map = PositionMap()
+val history = History(NativeStorage.getOrNull("history")) { NativeStorage["history"] = it.toString() }
 val blocks = mutableMapOf<Int, Block>()
 
 fun numberFor(blockId: Int) = blocks[blockId]!!.number
@@ -110,7 +112,37 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
         }
     }
 
-    generateBlock()
+    val btnSize = cellSize * 0.3
+    val restartBlock = container {
+        val background = roundRect(btnSize, btnSize, 5, color = RGBA(185, 174, 160))
+        image(resourcesVfs["restart.png"].readBitmap()) {
+            size(btnSize * 0.8, btnSize * 0.8)
+            centerOn(background)
+        }
+        alignTopToBottomOf(bgBest, 5)
+        alignRightToRightOf(bgField)
+        onClick {
+            this@Korge.restart()
+        }
+    }
+    container {
+        val background = roundRect(btnSize, btnSize, 5, color = RGBA(185, 174, 160))
+        image(resourcesVfs["undo.png"].readBitmap()) {
+            size(btnSize * 0.6, btnSize * 0.6)
+            centerOn(background)
+        }
+        alignTopToTopOf(restartBlock)
+        alignRightToLeftOf(restartBlock, 5)
+        onClick {
+            this@Korge.restoreField(history.undo())
+        }
+    }
+
+    if (!history.isEmpty()) {
+        restoreField(history.currentElement)
+    } else {
+        generateBlockAndSave()
+    }
 
     onSwipe(20.0) {
         when (it.direction) {
@@ -154,7 +186,7 @@ fun Stage.moveBlocksTo(direction: Direction) {
         animationRunning = true
         showAnimation(moves, merges) {
             map = newMap
-            generateBlock()
+            generateBlockAndSave()
             animationRunning = false
             var points = 0
             merges.forEach {
@@ -162,8 +194,6 @@ fun Stage.moveBlocksTo(direction: Direction) {
             }
             score.update(score.value + points)
         }
-    } else {
-        map = newMap
     }
 }
 
@@ -310,14 +340,34 @@ fun Container.restart() {
     blocks.values.forEach { it.removeFromParent() }
     blocks.clear()
     score.update(0)
-    generateBlock()
+    history.clear()
+    generateBlockAndSave()
 }
 
-fun Container.generateBlock() {
+fun Container.restoreField(history: History.Element) {
+    map.forEach { if (it != -1) deleteBlock(it) }
+    map = PositionMap()
+    score.update(history.score)
+    freeId = 0
+    val numbers = history.numberIds.map {
+        if (it >= 0 && it < Number.values().size)
+            Number.values()[it]
+        else null
+    }
+    numbers.forEachIndexed { i, number ->
+        if (number != null) {
+            val newId = createNewBlock(number, Position(i % 4, i / 4))
+            map[i % 4, i / 4] = newId
+        }
+    }
+}
+
+fun Container.generateBlockAndSave() {
     val position = map.getRandomFreePosition() ?: return
     val number = if (Random.nextDouble() < 0.9) Number.ZERO else Number.ONE
     val newId = createNewBlock(number, position)
     map[position.x, position.y] = newId
+    history.add(map.toNumberIds(), score.value)
 }
 
 fun Container.createNewBlock(number: Number, position: Position): Int {

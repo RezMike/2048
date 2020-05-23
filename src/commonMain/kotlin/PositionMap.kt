@@ -11,7 +11,7 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
 
     private fun getOrNull(x: Int, y: Int) = if (array.get(x, y) != -1) Position(x, y) else null
 
-    private fun getNumber(x: Int, y: Int) = array.tryGet(x, y)?.let { blocks[it]?.number ?: -1 } ?: -1
+    private fun getNumber(x: Int, y: Int) = array.tryGet(x, y)?.let { blocks[it]?.number?.ordinal ?: -1 } ?: -1
 
     fun getNotEmptyPositionFrom(direction: Direction, line: Int): Position? {
         when (direction) {
@@ -56,9 +56,14 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
         array[x, y] = value
     }
 
+    fun toNumberIds() = IntArray(16) { getNumber(it % 4, it / 4) }
+
+    fun forEach(action: (Int) -> Unit) { array.forEach(action) }
+
     fun copy() = PositionMap(array.copy(data = array.data.copyOf()))
 
     override fun equals(other: Any?): Boolean {
         return (other is PositionMap) && this.array.data.contentEquals(other.array.data)
     }
+    override fun hashCode() = array.hashCode()
 }
