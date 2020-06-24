@@ -22,11 +22,11 @@ import kotlin.random.*
 var font: BitmapFont? = null
 var fieldSize: Double = 0.0
 var cellSize: Double = 0.0
-var paddingLeft: Double = 0.0
-var paddingTop: Double = 0.0
+var leftIndent: Double = 0.0
+var topIndent: Double = 0.0
 
-fun columnX(number: Int) = paddingLeft + 10 + (cellSize + 10) * number
-fun rowY(number: Int) = paddingTop + 10 + (cellSize + 10) * number
+fun columnX(number: Int) = leftIndent + 10 + (cellSize + 10) * number
+fun rowY(number: Int) = topIndent + 10 + (cellSize + 10) * number
 
 var map = PositionMap()
 val history = History(NativeStorage.getOrNull("history")) { NativeStorage["history"] = it.toString() }
@@ -42,7 +42,7 @@ var freeId = 0
 var animationRunning = false
 var isGameOver = false
 
-suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 240)) {
+suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = RGBA(253, 247, 240)) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
     score.observe {
@@ -54,59 +54,59 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
 
     cellSize = views.virtualWidth / 5.0
     fieldSize = 50 + 4 * cellSize
-    paddingLeft = (views.virtualWidth - fieldSize) / 2
-    paddingTop = 150.0
+    leftIndent = (views.virtualWidth - fieldSize) / 2
+    topIndent = 150.0
 
-    val bgField = roundRect(fieldSize, fieldSize, 5, color = RGBA(185, 174, 160)) {
-        position(paddingLeft, paddingTop)
+    val bgField = roundRect(fieldSize, fieldSize, 5.0, color = Colors["#b9aea0"]) {
+        position(leftIndent, topIndent)
     }
     graphics {
-        position(paddingLeft, paddingTop)
-        fill(RGBA(206, 192, 178)) {
+        position(leftIndent, topIndent)
+        fill(Colors["#cec0b2"]) {
             for (i in 0..3) {
                 for (j in 0..3) {
-                    roundRect(10 + (10 + cellSize) * i, 10 + (10 + cellSize) * j, cellSize, cellSize, 5)
+                    roundRect(10 + (10 + cellSize) * i, 10 + (10 + cellSize) * j, cellSize, cellSize, 5.0)
                 }
             }
         }
     }
 
-    val bg2048 = roundRect(cellSize, cellSize, 5, color = RGBA(237, 196, 3)) {
-        position(paddingLeft, 30)
+    val bgLogo = roundRect(cellSize, cellSize, 5.0, color = RGBA(237, 196, 3)) {
+        position(leftIndent, 30.0)
     }
-    text("2048", cellSize * 0.5, Colors.WHITE, font!!).centerOn(bg2048)
+    text("2048", cellSize * 0.5, Colors.WHITE, font!!).centerOn(bgLogo)
 
-    val bgBest = roundRect(cellSize * 1.5, cellSize * 0.8, 5, color = RGBA(187, 174, 158)) {
+    val bgBest = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, color = Colors["#bbae9e"]) {
         alignRightToRightOf(bgField)
-        alignTopToTopOf(bg2048)
+        alignTopToTopOf(bgLogo)
     }
     text("BEST", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
         centerXOn(bgBest)
-        alignTopToTopOf(bgBest, 5)
+        alignTopToTopOf(bgBest, 5.0)
     }
     text(best.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
         setTextBounds(Rectangle(0.0, 0.0, bgBest.width, cellSize - 24.0))
         format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
-        alignTopToTopOf(bgBest, 12)
+        alignTopToTopOf(bgBest, 12.0)
         centerXOn(bgBest)
         best {
             text = it.toString()
         }
     }
 
-    val bgScore = roundRect(cellSize * 1.5, cellSize * 0.8, 5, color = RGBA(187, 174, 158)) {
-        alignRightToLeftOf(bgBest, 24)
+    val bgScore = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, color = Colors["#bbae9e"]) {
+        alignRightToLeftOf(bgBest, 24.0)
         alignTopToTopOf(bgBest)
     }
     text("SCORE", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
         centerXOn(bgScore)
-        alignTopToTopOf(bgScore, 5)
+        alignTopToTopOf(bgScore, 5.0)
     }
     text(score.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
         setTextBounds(Rectangle(0.0, 0.0, bgScore.width, cellSize - 24.0))
         format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
         centerXOn(bgScore)
-        alignTopToTopOf(bgScore, 12)
+        alignTopToTopOf(bgScore, 12.0)
         score {
             text = it.toString()
         }
@@ -114,25 +114,25 @@ suspend fun main() = Korge(width = 480, height = 640, bgcolor = RGBA(253, 247, 2
 
     val btnSize = cellSize * 0.3
     val restartBlock = container {
-        val background = roundRect(btnSize, btnSize, 5, color = RGBA(185, 174, 160))
+        val background = roundRect(btnSize, btnSize, 5.0, color = RGBA(185, 174, 160))
         image(resourcesVfs["restart.png"].readBitmap()) {
             size(btnSize * 0.8, btnSize * 0.8)
             centerOn(background)
         }
-        alignTopToBottomOf(bgBest, 5)
+        alignTopToBottomOf(bgBest, 5.0)
         alignRightToRightOf(bgField)
         onClick {
             this@Korge.restart()
         }
     }
-    container {
+    val undoBlock = container {
         val background = roundRect(btnSize, btnSize, 5, color = RGBA(185, 174, 160))
         image(resourcesVfs["undo.png"].readBitmap()) {
             size(btnSize * 0.6, btnSize * 0.6)
             centerOn(background)
         }
         alignTopToTopOf(restartBlock)
-        alignRightToLeftOf(restartBlock, 5)
+        alignRightToLeftOf(restartBlock, 5.0)
         onClick {
             this@Korge.restoreField(history.undo())
         }
@@ -311,7 +311,7 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
         onRestart()
     }
 
-    position(paddingLeft, paddingTop)
+    position(leftIndent, topIndent)
 
     graphics {
         fill(Colors.WHITE, 0.2) {
