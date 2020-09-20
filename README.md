@@ -51,9 +51,9 @@ You can run your tests using Node.JS by calling `jsTest` or in a headless chrome
 Using gradle tasks on the terminal:
 
 ```bash
-./gradlew linkMainDebugExecutableMacosX64         # Outputs to /build/bin/macosX64/mainDebugExecutable/main.kexe
-./gradlew linkMainDebugExecutableLinuxX64         # Outputs to /build/bin/linuxX64/mainDebugExecutable/main.kexe
-./gradlew linkMainDebugExecutableMingwX64         # Outputs to /build/bin/mingwX64/mainDebugExecutable/main.exe
+./gradlew linkDebugExecutableMacosX64         # Outputs to /build/bin/macosX64/mainDebugExecutable/main.kexe
+./gradlew linkDebugExecutableLinuxX64         # Outputs to /build/bin/linuxX64/mainDebugExecutable/main.kexe
+./gradlew linkDebugExecutableMingwX64         # Outputs to /build/bin/mingwX64/mainDebugExecutable/main.exe
 ```
 
 Note that windows executables doesn't have icons bundled.
@@ -66,8 +66,8 @@ If you have docker installed, you can generate native executables for linux and 
 using the cross-compiling gradle wrappers:
 
 ```bash
-./gradlew_linux linkMainDebugExecutableLinuxX64   # Outputs to /build/web
-./gradlew_win   linkMainDebugExecutableMingwX64   # Outputs to /build/web
+./gradlew_linux linkDebugExecutableLinuxX64   # Outputs to /build/web
+./gradlew_win   linkDebugExecutableMingwX64   # Outputs to /build/web
 ```
 
 ### Generating MacOS `.app`
