@@ -60,10 +60,9 @@ class PositionTest {
 
     private fun checkMap(direction: Direction, oldMapArray: IntArray, newMapArray: IntArray) {
         val oldMap = PositionMap(IntArray2(4, 4, oldMapArray))
-        val newMap = PositionMap()
         val moves = mutableListOf<Pair<Int, Position>>()
         val merges = mutableListOf<Triple<Int, Int, Position>>()
-        calculateNewMap(oldMap, newMap, direction, moves, merges)
+        val newMap = calculateNewMap(oldMap, direction, moves, merges)
         assertEquals(PositionMap(IntArray2(4, 4, newMapArray)), newMap)
     }
 }

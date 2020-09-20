@@ -17,9 +17,10 @@ import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
 import com.soywiz.korma.interpolation.*
 import kotlin.collections.set
+import kotlin.properties.Delegates
 import kotlin.random.*
 
-var font: BitmapFont? = null
+var font: BitmapFont by Delegates.notNull()
 var fieldSize: Double = 0.0
 var cellSize: Double = 0.0
 var leftIndent: Double = 0.0
@@ -29,14 +30,14 @@ fun columnX(number: Int) = leftIndent + 10 + (cellSize + 10) * number
 fun rowY(number: Int) = topIndent + 10 + (cellSize + 10) * number
 
 var map = PositionMap()
-val history = History(NativeStorage.getOrNull("history")) { NativeStorage["history"] = it.toString() }
+var history: History by Delegates.notNull()
 val blocks = mutableMapOf<Int, Block>()
 
 fun numberFor(blockId: Int) = blocks[blockId]!!.number
 fun deleteBlock(blockId: Int) = blocks.remove(blockId)!!.removeFromParent()
 
 val score = ObservableProperty(0)
-val best = ObservableProperty(NativeStorage.getOrNull("best")?.toInt() ?: 0)
+val best = ObservableProperty(0)
 
 var freeId = 0
 var animationRunning = false
@@ -45,11 +46,14 @@ var isGameOver = false
 suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = RGBA(253, 247, 240)) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
+    val storage = NativeStorage(views)
+    history = History(storage.getOrNull("history")) { storage["history"] = it.toString() }
+    best.update(storage.getOrNull("best")?.toInt() ?: 0)
     score.observe {
         if (it > best.value) best.update(it)
     }
     best.observe {
-        NativeStorage["best"] = it.toString()
+        storage["best"] = it.toString()
     }
 
     cellSize = views.virtualWidth / 5.0
@@ -74,17 +78,17 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
     val bgLogo = roundRect(cellSize, cellSize, 5.0, color = RGBA(237, 196, 3)) {
         position(leftIndent, 30.0)
     }
-    text("2048", cellSize * 0.5, Colors.WHITE, font!!).centerOn(bgLogo)
+    text("2048", cellSize * 0.5, Colors.WHITE, font).centerOn(bgLogo)
 
     val bgBest = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, color = Colors["#bbae9e"]) {
         alignRightToRightOf(bgField)
         alignTopToTopOf(bgLogo)
     }
-    text("BEST", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
+    text("BEST", cellSize * 0.25, RGBA(239, 226, 210), font) {
         centerXOn(bgBest)
         alignTopToTopOf(bgBest, 5.0)
     }
-    text(best.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+    text(best.value.toString(), cellSize * 0.5, Colors.WHITE, font) {
         setTextBounds(Rectangle(0.0, 0.0, bgBest.width, cellSize - 24.0))
         format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
         alignTopToTopOf(bgBest, 12.0)
@@ -98,11 +102,11 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         alignRightToLeftOf(bgBest, 24.0)
         alignTopToTopOf(bgBest)
     }
-    text("SCORE", cellSize * 0.25, RGBA(239, 226, 210), font!!) {
+    text("SCORE", cellSize * 0.25, RGBA(239, 226, 210), font) {
         centerXOn(bgScore)
         alignTopToTopOf(bgScore, 5.0)
     }
-    text(score.value.toString(), cellSize * 0.5, Colors.WHITE, font!!) {
+    text(score.value.toString(), cellSize * 0.5, Colors.WHITE, font) {
         setTextBounds(Rectangle(0.0, 0.0, bgScore.width, cellSize - 24.0))
         format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
         centerXOn(bgScore)
@@ -299,7 +303,7 @@ fun Animator.animateScale(block: Block) {
 }
 
 fun Container.showGameOver(onRestart: () -> Unit) = container {
-    val format = TextFormat(RGBA(0, 0, 0), 40, Html.FontFace.Bitmap(font!!))
+    val format = TextFormat(RGBA(0, 0, 0), 40, Html.FontFace.Bitmap(font))
     val skin = TextSkin(
             normal = format,
             over = format.copy(RGBA(90, 90, 90)),
@@ -318,7 +322,7 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
             roundRect(0, 0, fieldSize, fieldSize, 5, 5)
         }
     }
-    text("Game Over", 60.0, Colors.BLACK, font!!) {
+    text("Game Over", 60.0, Colors.BLACK, font) {
         centerBetween(0, 0, fieldSize, fieldSize)
         y -= 60
     }
