@@ -4,3 +4,4 @@
 *.iml
 *.hprof
 *.log
+/local.properties

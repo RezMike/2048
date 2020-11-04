@@ -13,6 +13,17 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
 
     private fun getNumber(x: Int, y: Int) = array.tryGet(x, y)?.let { blocks[it]?.number?.ordinal ?: -1 } ?: -1
 
+    fun hasAvailableMoves(): Boolean {
+        array.each { x, y, _ ->
+            if (hasAdjacentEqualPosition(x, y)) return true
+        }
+        return false
+    }
+
+    private fun hasAdjacentEqualPosition(x: Int, y: Int) = getNumber(x, y).let {
+        it == getNumber(x - 1, y) || it == getNumber(x + 1, y) || it == getNumber(x, y - 1) || it == getNumber(x, y + 1)
+    }
+
     fun getNotEmptyPositionFrom(direction: Direction, line: Int): Position? {
         when (direction) {
             Direction.LEFT -> for (i in 0..3) getOrNull(i, line)?.let { return it }
@@ -24,9 +35,9 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
     }
 
     fun getRandomFreePosition(): Position? {
-        val amount = array.count { it == -1 }
-        if (amount == 0) return null
-        val chosen = Random.nextInt(amount)
+        val quantity = array.count { it == -1 }
+        if (quantity == 0) return null
+        val chosen = Random.nextInt(quantity)
         var current = -1
         array.each { x, y, value ->
             if (value == -1) {
@@ -37,17 +48,6 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
             }
         }
         return null
-    }
-
-    private fun hasAdjacentEqualPosition(x: Int, y: Int) = getNumber(x, y).let {
-        it == getNumber(x - 1, y) || it == getNumber(x + 1, y) || it == getNumber(x, y - 1) || it == getNumber(x, y + 1)
-    }
-
-    fun hasAvailableMoves(): Boolean {
-        array.each { x, y, _ ->
-            if (hasAdjacentEqualPosition(x, y)) return true
-        }
-        return false
     }
 
     operator fun get(x: Int, y: Int) = array[x, y]
@@ -65,5 +65,6 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
     override fun equals(other: Any?): Boolean {
         return (other is PositionMap) && this.array.data.contentEquals(other.array.data)
     }
+
     override fun hashCode() = array.hashCode()
 }

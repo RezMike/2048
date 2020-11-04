@@ -12,26 +12,27 @@ import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
 import com.soywiz.korim.format.*
 import com.soywiz.korio.async.*
+import com.soywiz.korio.async.ObservableProperty
 import com.soywiz.korio.file.std.*
 import com.soywiz.korma.geom.*
 import com.soywiz.korma.geom.vector.*
 import com.soywiz.korma.interpolation.*
 import kotlin.collections.set
-import kotlin.properties.Delegates
+import kotlin.properties.*
 import kotlin.random.*
 
-var font: BitmapFont by Delegates.notNull()
 var fieldSize: Double = 0.0
 var cellSize: Double = 0.0
 var leftIndent: Double = 0.0
 var topIndent: Double = 0.0
+var font: BitmapFont by Delegates.notNull()
 
 fun columnX(number: Int) = leftIndent + 10 + (cellSize + 10) * number
 fun rowY(number: Int) = topIndent + 10 + (cellSize + 10) * number
 
 var map = PositionMap()
-var history: History by Delegates.notNull()
 val blocks = mutableMapOf<Int, Block>()
+var history: History by Delegates.notNull()
 
 fun numberFor(blockId: Int) = blocks[blockId]!!.number
 fun deleteBlock(blockId: Int) = blocks.remove(blockId)!!.removeFromParent()
@@ -40,15 +41,18 @@ val score = ObservableProperty(0)
 val best = ObservableProperty(0)
 
 var freeId = 0
-var animationRunning = false
+var isAnimationRunning = false
 var isGameOver = false
 
 suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = RGBA(253, 247, 240)) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
-    val storage = NativeStorage(views)
-    history = History(storage.getOrNull("history")) { storage["history"] = it.toString() }
+    val storage = views.storage
+    history = History(storage.getOrNull("history")) {
+        storage["history"] = it.toString()
+    }
     best.update(storage.getOrNull("best")?.toInt() ?: 0)
+
     score.observe {
         if (it > best.value) best.update(it)
     }
@@ -93,7 +97,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
         alignTopToTopOf(bgBest, 12.0)
         centerXOn(bgBest)
-        best {
+        best.observe {
             text = it.toString()
         }
     }
@@ -111,15 +115,17 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
         centerXOn(bgScore)
         alignTopToTopOf(bgScore, 12.0)
-        score {
+        score.observe {
             text = it.toString()
         }
     }
 
     val btnSize = cellSize * 0.3
+    val restartImg = resourcesVfs["restart.png"].readBitmap()
+    val undoImg = resourcesVfs["undo.png"].readBitmap()
     val restartBlock = container {
         val background = roundRect(btnSize, btnSize, 5.0, color = RGBA(185, 174, 160))
-        image(resourcesVfs["restart.png"].readBitmap()) {
+        image(restartImg) {
             size(btnSize * 0.8, btnSize * 0.8)
             centerOn(background)
         }
@@ -130,8 +136,8 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         }
     }
     val undoBlock = container {
-        val background = roundRect(btnSize, btnSize, 5, color = RGBA(185, 174, 160))
-        image(resourcesVfs["undo.png"].readBitmap()) {
+        val background = roundRect(btnSize, btnSize, 5.0, color = RGBA(185, 174, 160))
+        image(undoImg) {
             size(btnSize * 0.6, btnSize * 0.6)
             centerOn(background)
         }
@@ -148,15 +154,6 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         generateBlockAndSave()
     }
 
-    onSwipe(20.0) {
-        when (it.direction) {
-            SwipeDirection.LEFT -> moveBlocksTo(Direction.LEFT)
-            SwipeDirection.RIGHT -> moveBlocksTo(Direction.RIGHT)
-            SwipeDirection.TOP -> moveBlocksTo(Direction.TOP)
-            SwipeDirection.BOTTOM -> moveBlocksTo(Direction.BOTTOM)
-        }
-    }
-
     onKeyDown {
         when (it.key) {
             Key.LEFT -> moveBlocksTo(Direction.LEFT)
@@ -166,10 +163,19 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
             else -> Unit
         }
     }
+
+    onSwipe(20.0) {
+        when (it.direction) {
+            SwipeDirection.LEFT -> moveBlocksTo(Direction.LEFT)
+            SwipeDirection.RIGHT -> moveBlocksTo(Direction.RIGHT)
+            SwipeDirection.TOP -> moveBlocksTo(Direction.TOP)
+            SwipeDirection.BOTTOM -> moveBlocksTo(Direction.BOTTOM)
+        }
+    }
 }
 
 fun Stage.moveBlocksTo(direction: Direction) {
-    if (animationRunning) return
+    if (isAnimationRunning) return
     if (!map.hasAvailableMoves()) {
         if (!isGameOver) {
             isGameOver = true
@@ -187,11 +193,11 @@ fun Stage.moveBlocksTo(direction: Direction) {
     val newMap = calculateNewMap(map.copy(), direction, moves, merges)
 
     if (map != newMap) {
-        animationRunning = true
+        isAnimationRunning = true
         showAnimation(moves, merges) {
             map = newMap
             generateBlockAndSave()
-            animationRunning = false
+            isAnimationRunning = false
             var points = 0
             merges.forEach {
                 points += numberFor(it.first).value
@@ -303,11 +309,15 @@ fun Animator.animateScale(block: Block) {
 }
 
 fun Container.showGameOver(onRestart: () -> Unit) = container {
-    val format = TextFormat(RGBA(0, 0, 0), 40, Html.FontFace.Bitmap(font))
+    val format = TextFormat(
+            color = RGBA(0, 0, 0),
+            size = 40,
+            font = Html.FontFace.Bitmap(font)
+    )
     val skin = TextSkin(
             normal = format,
-            over = format.copy(RGBA(90, 90, 90)),
-            down = format.copy(RGBA(120, 120, 120))
+            over = format.copy(color = RGBA(90, 90, 90)),
+            down = format.copy(color = RGBA(120, 120, 120))
     )
 
     fun restart() {
@@ -317,20 +327,17 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
 
     position(leftIndent, topIndent)
 
-    graphics {
-        fill(Colors.WHITE, 0.2) {
-            roundRect(0, 0, fieldSize, fieldSize, 5, 5)
-        }
-    }
+    roundRect(fieldSize, fieldSize, 5.0, color = Colors["#FFFFFF33"])
     text("Game Over", 60.0, Colors.BLACK, font) {
-        centerBetween(0, 0, fieldSize, fieldSize)
+        centerBetween(0.0, 0.0, fieldSize, fieldSize)
         y -= 60
     }
-    uiText("Try again", 120, 35, skin) {
-        centerBetween(0, 0, fieldSize, fieldSize)
+    uiText("Try again", 120.0, 35.0, skin) {
+        centerBetween(0.0, 0.0, fieldSize, fieldSize)
         y += 20
         onClick { restart() }
     }
+
     onKeyDown {
         when (it.key) {
             Key.ENTER, Key.SPACE -> restart()

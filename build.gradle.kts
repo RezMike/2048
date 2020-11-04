@@ -3,6 +3,7 @@ import com.soywiz.korge.gradle.*
 buildscript {
     repositories {
         mavenLocal()
+        google()
         maven { url = uri("https://dl.bintray.com/korlibs/korlibs") }
         maven { url = uri("https://plugins.gradle.org/m2/") }
         mavenCentral()
