@@ -2,7 +2,6 @@ import com.soywiz.klock.*
 import com.soywiz.korev.*
 import com.soywiz.korge.*
 import com.soywiz.korge.animate.*
-import com.soywiz.korge.html.*
 import com.soywiz.korge.input.*
 import com.soywiz.korge.service.storage.*
 import com.soywiz.korge.tween.*
@@ -11,6 +10,7 @@ import com.soywiz.korge.view.*
 import com.soywiz.korim.color.*
 import com.soywiz.korim.font.*
 import com.soywiz.korim.format.*
+import com.soywiz.korim.text.TextAlignment
 import com.soywiz.korio.async.*
 import com.soywiz.korio.async.ObservableProperty
 import com.soywiz.korio.file.std.*
@@ -65,7 +65,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
     leftIndent = (views.virtualWidth - fieldSize) / 2
     topIndent = 150.0
 
-    val bgField = roundRect(fieldSize, fieldSize, 5.0, color = Colors["#b9aea0"]) {
+    val bgField = roundRect(fieldSize, fieldSize, 5.0, fill = Colors["#b9aea0"]) {
         position(leftIndent, topIndent)
     }
     graphics {
@@ -79,12 +79,12 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         }
     }
 
-    val bgLogo = roundRect(cellSize, cellSize, 5.0, color = RGBA(237, 196, 3)) {
+    val bgLogo = roundRect(cellSize, cellSize, 5.0, fill = RGBA(237, 196, 3)) {
         position(leftIndent, 30.0)
     }
     text("2048", cellSize * 0.5, Colors.WHITE, font).centerOn(bgLogo)
 
-    val bgBest = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, color = Colors["#bbae9e"]) {
+    val bgBest = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, fill = Colors["#bbae9e"]) {
         alignRightToRightOf(bgField)
         alignTopToTopOf(bgLogo)
     }
@@ -94,7 +94,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
     }
     text(best.value.toString(), cellSize * 0.5, Colors.WHITE, font) {
         setTextBounds(Rectangle(0.0, 0.0, bgBest.width, cellSize - 24.0))
-        format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
+        alignment = TextAlignment.MIDDLE_CENTER
         alignTopToTopOf(bgBest, 12.0)
         centerXOn(bgBest)
         best.observe {
@@ -102,7 +102,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         }
     }
 
-    val bgScore = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, color = Colors["#bbae9e"]) {
+    val bgScore = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, fill = Colors["#bbae9e"]) {
         alignRightToLeftOf(bgBest, 24.0)
         alignTopToTopOf(bgBest)
     }
@@ -112,7 +112,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
     }
     text(score.value.toString(), cellSize * 0.5, Colors.WHITE, font) {
         setTextBounds(Rectangle(0.0, 0.0, bgScore.width, cellSize - 24.0))
-        format = format.copy(align = Html.Alignment.MIDDLE_CENTER)
+        alignment = TextAlignment.MIDDLE_CENTER
         centerXOn(bgScore)
         alignTopToTopOf(bgScore, 12.0)
         score.observe {
@@ -124,7 +124,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
     val restartImg = resourcesVfs["restart.png"].readBitmap()
     val undoImg = resourcesVfs["undo.png"].readBitmap()
     val restartBlock = container {
-        val background = roundRect(btnSize, btnSize, 5.0, color = RGBA(185, 174, 160))
+        val background = roundRect(btnSize, btnSize, 5.0, fill = RGBA(185, 174, 160))
         image(restartImg) {
             size(btnSize * 0.8, btnSize * 0.8)
             centerOn(background)
@@ -136,7 +136,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         }
     }
     val undoBlock = container {
-        val background = roundRect(btnSize, btnSize, 5.0, color = RGBA(185, 174, 160))
+        val background = roundRect(btnSize, btnSize, 5.0, fill = RGBA(185, 174, 160))
         image(undoImg) {
             size(btnSize * 0.6, btnSize * 0.6)
             centerOn(background)
@@ -154,7 +154,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         generateBlockAndSave()
     }
 
-    onKeyDown {
+    keys.down {
         when (it.key) {
             Key.LEFT -> moveBlocksTo(Direction.LEFT)
             Key.RIGHT -> moveBlocksTo(Direction.RIGHT)
@@ -312,7 +312,7 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
     val format = TextFormat(
             color = RGBA(0, 0, 0),
             size = 40,
-            font = Html.FontFace.Bitmap(font)
+            font = font
     )
     val skin = TextSkin(
             normal = format,
@@ -327,7 +327,7 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
 
     position(leftIndent, topIndent)
 
-    roundRect(fieldSize, fieldSize, 5.0, color = Colors["#FFFFFF33"])
+    roundRect(fieldSize, fieldSize, 5.0, fill = Colors["#FFFFFF33"])
     text("Game Over", 60.0, Colors.BLACK, font) {
         centerBetween(0.0, 0.0, fieldSize, fieldSize)
         y -= 60
@@ -338,7 +338,7 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
         onClick { restart() }
     }
 
-    onKeyDown {
+    keys.down {
         when (it.key) {
             Key.ENTER, Key.SPACE -> restart()
             else -> Unit
