@@ -21,8 +21,8 @@ import kotlin.collections.set
 import kotlin.properties.*
 import kotlin.random.*
 
-var fieldSize: Double = 0.0
 var cellSize: Double = 0.0
+var fieldSize: Double = 0.0
 var leftIndent: Double = 0.0
 var topIndent: Double = 0.0
 var font: BitmapFont by Delegates.notNull()

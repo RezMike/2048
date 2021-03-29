@@ -1,25 +1,19 @@
 import Number.*
 import com.soywiz.korge.view.*
 import com.soywiz.korim.color.*
-import com.soywiz.korma.geom.vector.*
 
 fun Container.block(number: Number) = Block(number).addTo(this)
 
 class Block(val number: Number) : Container() {
 
     init {
-        graphics {
-            val number = this@Block.number
-            fill(number.color) {
-                roundRect(0.0, 0.0, cellSize, cellSize, 5.0)
-            }
-            val textColor = when (number) {
-                ZERO, ONE -> Colors.BLACK
-                else -> Colors.WHITE
-            }
-            text(number.value.toString(), textSizeFor(number), textColor, font).apply {
-                centerBetween(0.0, 0.0, cellSize, cellSize)
-            }
+        roundRect(cellSize, cellSize, 5.0, fill = number.color)
+        val textColor = when (number) {
+            ZERO, ONE -> Colors.BLACK
+            else -> Colors.WHITE
+        }
+        text(number.value.toString(), textSizeFor(number), textColor, font).apply {
+            centerBetween(0.0, 0.0, cellSize, cellSize)
         }
     }
 }
