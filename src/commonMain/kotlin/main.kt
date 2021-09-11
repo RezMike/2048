@@ -154,7 +154,7 @@ suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = 
         generateBlockAndSave()
     }
 
-    keys.down {
+    root.keys.down {
         when (it.key) {
             Key.LEFT -> moveBlocksTo(Direction.LEFT)
             Key.RIGHT -> moveBlocksTo(Direction.RIGHT)
@@ -309,17 +309,6 @@ fun Animator.animateScale(block: Block) {
 }
 
 fun Container.showGameOver(onRestart: () -> Unit) = container {
-    val format = TextFormat(
-            color = RGBA(0, 0, 0),
-            size = 40,
-            font = font
-    )
-    val skin = TextSkin(
-            normal = format,
-            over = format.copy(color = RGBA(90, 90, 90)),
-            down = format.copy(color = RGBA(120, 120, 120))
-    )
-
     fun restart() {
         this@container.removeFromParent()
         onRestart()
@@ -332,9 +321,16 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
         centerBetween(0.0, 0.0, fieldSize, fieldSize)
         y -= 60
     }
-    uiText("Try again", 120.0, 35.0, skin) {
+    uiText("Try again", 120.0, 35.0) {
         centerBetween(0.0, 0.0, fieldSize, fieldSize)
         y += 20
+        textSize = 40.0
+        textFont = font
+        textColor = RGBA(0, 0, 0)
+        onOver { textColor = RGBA(90, 90, 90) }
+        onOut { textColor = RGBA(0, 0, 0) }
+        onDown { textColor = RGBA(120, 120, 120) }
+        onUp { textColor = RGBA(120, 120, 120) }
         onClick { restart() }
     }
 
