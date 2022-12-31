@@ -44,7 +44,17 @@ var freeId = 0
 var isAnimationRunning = false
 var isGameOver = false
 
-suspend fun main() = Korge(width = 480, height = 640, title = "2048", bgcolor = RGBA(253, 247, 240)) {
+suspend fun main() = Korge(
+    width = 480,
+    height = 640,
+    title = "2048",
+    bgcolor = RGBA(253, 247, 240),
+    /**
+        `gameId` is associated with the location of storage, which contains `history` and `best`.
+        see [Views.realSettingsFolder]
+     */
+    gameId = "io.github.rezmike.game2048",
+) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
     val storage = views.storage
@@ -208,10 +218,10 @@ fun Stage.moveBlocksTo(direction: Direction) {
 }
 
 fun calculateNewMap(
-        map: PositionMap,
-        direction: Direction,
-        moves: MutableList<Pair<Int, Position>>,
-        merges: MutableList<Triple<Int, Int, Position>>
+    map: PositionMap,
+    direction: Direction,
+    moves: MutableList<Pair<Int, Position>>,
+    merges: MutableList<Triple<Int, Int, Position>>
 ): PositionMap {
     val newMap = PositionMap()
     val startIndex = when (direction) {
@@ -255,9 +265,9 @@ fun calculateNewMap(
 }
 
 fun Stage.showAnimation(
-        moves: List<Pair<Int, Position>>,
-        merges: List<Triple<Int, Int, Position>>,
-        onEnd: () -> Unit
+    moves: List<Pair<Int, Position>>,
+    merges: List<Triple<Int, Int, Position>>,
+    onEnd: () -> Unit
 ) = launchImmediately {
     animateSequence {
         parallel {
@@ -293,18 +303,18 @@ fun Animator.animateScale(block: Block) {
     val y = block.y
     val scale = block.scale
     tween(
-            block::x[x - 4],
-            block::y[y - 4],
-            block::scale[scale + 0.1],
-            time = 0.1.seconds,
-            easing = Easing.LINEAR
+        block::x[x - 4],
+        block::y[y - 4],
+        block::scale[scale + 0.1],
+        time = 0.1.seconds,
+        easing = Easing.LINEAR
     )
     tween(
-            block::x[x],
-            block::y[y],
-            block::scale[scale],
-            time = 0.1.seconds,
-            easing = Easing.LINEAR
+        block::x[x],
+        block::y[y],
+        block::scale[scale],
+        time = 0.1.seconds,
+        easing = Easing.LINEAR
     )
 }
 
