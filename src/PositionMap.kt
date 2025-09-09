@@ -1,4 +1,4 @@
-import com.soywiz.kds.*
+import korlibs.datastructure.*
 import kotlin.random.*
 
 class Position(val x: Int, val y: Int)
@@ -60,7 +60,7 @@ class PositionMap(private val array: IntArray2 = IntArray2(4, 4, -1)) {
 
     fun forEach(action: (Int) -> Unit) { array.forEach(action) }
 
-    fun copy() = PositionMap(array.copy(data = array.data.copyOf()))
+    fun copy() = PositionMap(array.clone())
 
     override fun equals(other: Any?): Boolean {
         return (other is PositionMap) && this.array.data.contentEquals(other.array.data)

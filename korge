@@ -1,0 +1,72 @@
+#!/bin/bash
+
+export INSTALLER_VERSION=0.1.1
+export INSTALLER_URL=https://github.com/korlibs/compiler.korge.org/releases/download/v$INSTALLER_VERSION/korge-kotlin-compiler-all.tar.xz
+export INSTALLER_SHA256=c34605db97a7bab75c661d3df3faec6961410a5159083d3b9da347cda0c9d3ce
+
+download_file()
+{
+  FILE_URL=$1
+  FILE_NAME=$2
+  EXPECTED_SHA256=$3
+  shift; shift; shift;
+
+  # Download the file if it doesn't exist
+  if [ ! -f "$FILE_NAME" ]; then
+    echo "Downloading... $FILE_URL"
+    curl -s -L "$FILE_URL" -o "$FILE_NAME.tmp"
+    if [ $? -ne 0 ]; then
+      echo "Failed to download the file."
+      exit 1
+    fi
+
+    # Calculate the SHA-1 checksum of the downloaded file
+    ACTUAL_SHA256=$(shasum -a 256 "$FILE_NAME.tmp" | awk '{ print $1 }')
+
+    # Compare the actual SHA-1 checksum with the expected one
+    if [ "${ACTUAL_SHA256}" != "${EXPECTED_SHA256}" ]; then
+      echo "SHA-1 checksum does not match for $FILE_URL in $FILE_NAME.tmp"
+      echo "Expected: $EXPECTED_SHA256"
+      echo "Actual:   $ACTUAL_SHA256"
+      exit 1
+    fi
+
+    mv "$FILE_NAME.tmp" "$FILE_NAME"
+
+    # echo "File verification succeeded."
+  fi
+}
+
+export JAVA="$HOME/.korge/jdk-21/bin/java"
+
+if [ ! -f "$JAVA" ]; then
+  mkdir -p "$HOME/.korge"
+  mkdir "$HOME/.korge/jdk-21" 2> /dev/null
+  if [[ "${OSTYPE}" == 'darwin'* ]]; then
+    download_file "https://github.com/korlibs/universal-jre/releases/download/0.0.1/microsoft-jre-21.0.3-mac-universal.tar.xz" "$HOME/.korge/jdk-21.tar.xz" "430909fef93915338979e49363474f55b04e3e4de03db225d5d2577467d603bc"
+    tar --strip-components 1 -xf "$HOME/.korge/jdk-21.tar.xz" -C "$HOME/.korge/jdk-21"
+  else
+    export ARCH=$(uname -m)
+    if [ "${ARCH}" == "aarch64" ] || [ "${ARCH}" == "arm64"* ]; then
+      download_file "https://github.com/korlibs/universal-jre/releases/download/0.0.1/microsoft-jre-21.0.3-linux-aarch64.tar.xz" "$HOME/.korge/jdk-21.tar.xz" "debbe8bcaedf5b62aacb74fada85bb150d3379b458160c6e72d397004b38290d"
+    else
+      download_file "https://github.com/korlibs/universal-jre/releases/download/0.0.1/microsoft-jre-21.0.3-linux-x64.tar.xz" "$HOME/.korge/jdk-21.tar.xz" "aeceeea4a1bfb976f793083b43bc44f940191c0ad3d385cc60c83c100288943b"
+    fi
+    tar --strip-components 1 -xf "$HOME/.korge/jdk-21.tar.xz" -C "$HOME/.korge/jdk-21"
+  fi
+  rm "$HOME/.korge/jdk-21.tar.xz"
+fi
+
+if [ ! -f "$HOME/.korge/compiler/korge-kotlin-compiler-all.$INSTALLER_VERSION.jar" ]; then
+  mkdir -p "$HOME/.korge/compiler" 2> /dev/null
+
+  download_file "$INSTALLER_URL" "$HOME/.korge/compiler/korge-kotlin-compiler-all.$INSTALLER_VERSION.tar.xz" "$INSTALLER_SHA256"
+
+  INSTALLER_TAR_XZ_PATH=$HOME/.korge/compiler/korge-kotlin-compiler-all.$INSTALLER_VERSION.tar.xz
+  tar -xf "$INSTALLER_TAR_XZ_PATH" -C "$HOME/.korge/compiler"
+  cp "$HOME/.korge/compiler/korge-kotlin-compiler-all.jar" "$HOME/.korge/compiler/korge-kotlin-compiler-all.$INSTALLER_VERSION.jar"
+  rm "$HOME/.korge/compiler/korge-kotlin-compiler-all.jar"
+  rm "$INSTALLER_TAR_XZ_PATH"
+fi
+
+"$JAVA" -jar "$HOME/.korge/compiler/korge-kotlin-compiler-all.$INSTALLER_VERSION.jar" $*

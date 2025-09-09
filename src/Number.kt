@@ -1,4 +1,4 @@
-import com.soywiz.korim.color.RGBA
+import korlibs.image.color.RGBA
 
 enum class Number(val value: Int, val color: RGBA) {
     ZERO(2, RGBA(240, 228, 218)),
@@ -19,5 +19,5 @@ enum class Number(val value: Int, val color: RGBA) {
     FIFTEEN(65536, RGBA(181, 37, 188)),
     SIXTEEN(131072, RGBA(166, 34, 172));
 
-    fun next() = values()[(ordinal + 1) % values().size]
+    fun next() = entries[(ordinal + 1) % entries.size]
 }

@@ -1,0 +1,15 @@
+buildscript {
+    repositories {
+        mavenLocal(); mavenCentral(); google(); gradlePluginPortal()
+        maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev") }
+        maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental") }
+    }
+}
+plugins {
+  id("com.soywiz.kproject")
+}
+dependencies {
+}
+[file("build.extra.gradle"), file("build.extra.gradle.kts")].each { extraGradle ->
+  if (extraGradle.exists()) apply from: extraGradle
+}

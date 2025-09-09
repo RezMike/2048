@@ -1,4 +1,4 @@
-import com.soywiz.kds.iterators.*
+import korlibs.datastructure.iterators.*
 
 class History(from: String?, private val onUpdate: (History) -> Unit) {
 
