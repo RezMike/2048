@@ -1,13 +1,19 @@
 import Number.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.color.*
+import korlibs.image.color.*
+import korlibs.korge.view.*
+import korlibs.korge.view.align.*
+import korlibs.math.geom.*
 
 fun Container.block(number: Number) = Block(number).addTo(this)
 
 class Block(val number: Number) : Container() {
 
     init {
-        roundRect(cellSize, cellSize, 5.0, fill = number.color)
+        roundRect(
+            size = Size(cellSize, cellSize),
+            radius = RectCorners(5.0),
+            fill = number.color
+        )
         val textColor = when (number) {
             ZERO, ONE -> Colors.BLACK
             else -> Colors.WHITE

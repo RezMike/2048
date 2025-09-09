@@ -1,22 +1,23 @@
-import com.soywiz.klock.*
-import com.soywiz.korev.*
-import com.soywiz.korge.*
-import com.soywiz.korge.animate.*
-import com.soywiz.korge.input.*
-import com.soywiz.korge.service.storage.*
-import com.soywiz.korge.tween.*
-import com.soywiz.korge.ui.*
-import com.soywiz.korge.view.*
-import com.soywiz.korim.color.*
-import com.soywiz.korim.font.*
-import com.soywiz.korim.format.*
-import com.soywiz.korim.text.TextAlignment
-import com.soywiz.korio.async.*
-import com.soywiz.korio.async.ObservableProperty
-import com.soywiz.korio.file.std.*
-import com.soywiz.korma.geom.*
-import com.soywiz.korma.geom.vector.*
-import com.soywiz.korma.interpolation.*
+import korlibs.event.*
+import korlibs.image.color.*
+import korlibs.image.font.*
+import korlibs.image.format.*
+import korlibs.image.text.*
+import korlibs.io.async.*
+import korlibs.io.async.ObservableProperty
+import korlibs.io.file.std.*
+import korlibs.korge.*
+import korlibs.korge.animate.*
+import korlibs.korge.input.*
+import korlibs.korge.service.storage.*
+import korlibs.korge.style.*
+import korlibs.korge.tween.*
+import korlibs.korge.ui.*
+import korlibs.korge.view.*
+import korlibs.korge.view.align.*
+import korlibs.math.geom.*
+import korlibs.math.interpolation.*
+import korlibs.time.*
 import kotlin.collections.set
 import kotlin.properties.*
 import kotlin.random.*
@@ -44,15 +45,14 @@ var freeId = 0
 var isAnimationRunning = false
 var isGameOver = false
 
-suspend fun main() = Korge(
-    width = 480,
-    height = 640,
+suspend fun main(): Unit = Korge(
     title = "2048",
-    bgcolor = RGBA(253, 247, 240),
-    /**
-        `gameId` is associated with the location of storage, which contains `history` and `best`.
-        see [Views.realSettingsFolder]
-     */
+    backgroundColor = RGBA(253, 247, 240),
+    windowSize = Size(
+        width = 480,
+        height = 640,
+    ),
+    //gameId is associated with the location of storage, which contains `history` and `best`
     gameId = "io.github.rezmike.game2048",
 ) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
@@ -75,11 +75,11 @@ suspend fun main() = Korge(
     leftIndent = (views.virtualWidth - fieldSize) / 2
     topIndent = 150.0
 
-    val bgField = roundRect(fieldSize, fieldSize, 5.0, fill = Colors["#b9aea0"]) {
+    val bgField = roundRect(Size(fieldSize, fieldSize), RectCorners(5.0), fill = Colors["#b9aea0"]) {
         position(leftIndent, topIndent)
     }
     graphics {
-        position(leftIndent, topIndent)
+        it.position(leftIndent, topIndent)
         fill(Colors["#cec0b2"]) {
             for (i in 0..3) {
                 for (j in 0..3) {
@@ -89,12 +89,12 @@ suspend fun main() = Korge(
         }
     }
 
-    val bgLogo = roundRect(cellSize, cellSize, 5.0, fill = RGBA(237, 196, 3)) {
+    val bgLogo = roundRect(Size(cellSize, cellSize), RectCorners(5.0), fill = RGBA(237, 196, 3)) {
         position(leftIndent, 30.0)
     }
     text("2048", cellSize * 0.5, Colors.WHITE, font).centerOn(bgLogo)
 
-    val bgBest = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, fill = Colors["#bbae9e"]) {
+    val bgBest = roundRect(Size(cellSize * 1.5, cellSize * 0.8), RectCorners(5.0), fill = Colors["#bbae9e"]) {
         alignRightToRightOf(bgField)
         alignTopToTopOf(bgLogo)
     }
@@ -112,7 +112,7 @@ suspend fun main() = Korge(
         }
     }
 
-    val bgScore = roundRect(cellSize * 1.5, cellSize * 0.8, 5.0, fill = Colors["#bbae9e"]) {
+    val bgScore = roundRect(Size(cellSize * 1.5, cellSize * 0.8), RectCorners(5.0), fill = Colors["#bbae9e"]) {
         alignRightToLeftOf(bgBest, 24.0)
         alignTopToTopOf(bgBest)
     }
@@ -134,7 +134,7 @@ suspend fun main() = Korge(
     val restartImg = resourcesVfs["restart.png"].readBitmap()
     val undoImg = resourcesVfs["undo.png"].readBitmap()
     val restartBlock = container {
-        val background = roundRect(btnSize, btnSize, 5.0, fill = RGBA(185, 174, 160))
+        val background = roundRect(Size(btnSize, btnSize), RectCorners(5.0), fill = RGBA(185, 174, 160))
         image(restartImg) {
             size(btnSize * 0.8, btnSize * 0.8)
             centerOn(background)
@@ -146,7 +146,7 @@ suspend fun main() = Korge(
         }
     }
     val undoBlock = container {
-        val background = roundRect(btnSize, btnSize, 5.0, fill = RGBA(185, 174, 160))
+        val background = roundRect(Size(btnSize, btnSize), RectCorners(5.0), fill = RGBA(185, 174, 160))
         image(undoImg) {
             size(btnSize * 0.6, btnSize * 0.6)
             centerOn(background)
@@ -269,31 +269,33 @@ fun Stage.showAnimation(
     merges: List<Triple<Int, Int, Position>>,
     onEnd: () -> Unit
 ) = launchImmediately {
-    animateSequence {
-        parallel {
-            moves.forEach { (id, pos) ->
-                blocks[id]!!.moveTo(columnX(pos.x), rowY(pos.y), 0.15.seconds, Easing.LINEAR)
-            }
-            merges.forEach { (id1, id2, pos) ->
-                sequence {
-                    parallel {
-                        blocks[id1]!!.moveTo(columnX(pos.x), rowY(pos.y), 0.15.seconds, Easing.LINEAR)
-                        blocks[id2]!!.moveTo(columnX(pos.x), rowY(pos.y), 0.15.seconds, Easing.LINEAR)
-                    }
-                    block {
-                        val nextNumber = numberFor(id1).next()
-                        deleteBlock(id1)
-                        deleteBlock(id2)
-                        createNewBlockWithId(id1, nextNumber, pos)
-                    }
-                    sequenceLazy {
-                        animateScale(blocks[id1]!!)
+    animate {
+        sequence {
+            parallel {
+                moves.forEach { (id, pos) ->
+                    moveTo(blocks[id]!!, columnX(pos.x), rowY(pos.y), 0.15.seconds, Easing.LINEAR)
+                }
+                merges.forEach { (id1, id2, pos) ->
+                    sequence {
+                        parallel {
+                            moveTo(blocks[id1]!!, columnX(pos.x), rowY(pos.y), 0.15.seconds, Easing.LINEAR)
+                            moveTo(blocks[id2]!!, columnX(pos.x), rowY(pos.y), 0.15.seconds, Easing.LINEAR)
+                        }
+                        block {
+                            val nextNumber = numberFor(id1).next()
+                            deleteBlock(id1)
+                            deleteBlock(id2)
+                            createNewBlockWithId(id1, nextNumber, pos)
+                        }
+                        sequenceLazy {
+                            animateScale(blocks[id1]!!)
+                        }
                     }
                 }
             }
-        }
-        block {
-            onEnd()
+            block {
+                onEnd()
+            }
         }
     }
 }
@@ -326,21 +328,23 @@ fun Container.showGameOver(onRestart: () -> Unit) = container {
 
     position(leftIndent, topIndent)
 
-    roundRect(fieldSize, fieldSize, 5.0, fill = Colors["#FFFFFF33"])
+    roundRect(Size(fieldSize, fieldSize), RectCorners(5.0), fill = Colors["#FFFFFF33"])
     text("Game Over", 60.0, Colors.BLACK, font) {
         centerBetween(0.0, 0.0, fieldSize, fieldSize)
         y -= 60
     }
-    uiText("Try again", 120.0, 35.0) {
+    uiText("Try again", Size(120.0, 35.0)) {
         centerBetween(0.0, 0.0, fieldSize, fieldSize)
         y += 20
-        textSize = 40.0
-        textFont = font
-        textColor = RGBA(0, 0, 0)
-        onOver { textColor = RGBA(90, 90, 90) }
-        onOut { textColor = RGBA(0, 0, 0) }
-        onDown { textColor = RGBA(120, 120, 120) }
-        onUp { textColor = RGBA(120, 120, 120) }
+        styles {
+            textSize = 40.0
+            textFont = font
+            textColor = RGBA(0, 0, 0)
+        }
+        onOver { styles.textColor = RGBA(90, 90, 90) }
+        onOut { styles.textColor = RGBA(0, 0, 0) }
+        onDown { styles.textColor = RGBA(120, 120, 120) }
+        onUp { styles.textColor = RGBA(120, 120, 120) }
         onClick { restart() }
     }
 
@@ -367,8 +371,8 @@ fun Container.restoreField(history: History.Element) {
     score.update(history.score)
     freeId = 0
     val numbers = history.numberIds.map {
-        if (it >= 0 && it < Number.values().size)
-            Number.values()[it]
+        if (it >= 0 && it < Number.entries.size)
+            Number.entries[it]
         else null
     }
     numbers.forEachIndexed { i, number ->
