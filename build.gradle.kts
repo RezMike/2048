@@ -1,23 +1,32 @@
-import com.soywiz.korge.gradle.*
+import korlibs.korge.gradle.*
 
-buildscript {
-    repositories {
-        mavenLocal()
-        google()
-        maven { url = uri("https://dl.bintray.com/korlibs/korlibs") }
-        maven { url = uri("https://plugins.gradle.org/m2/") }
-        mavenCentral()
-        google()
-    }
-    dependencies {
-        classpath("com.soywiz.korlibs.korge.plugins:korge-gradle-plugin:2.4.1")
-    }
+plugins {
+	alias(libs.plugins.korge)
 }
-
-apply<KorgeGradlePlugin>()
 
 korge {
     id = "io.github.rezmike.game2048"
     name = "2048"
     icon = file("src/commonMain/resources/korge.png")
+
+    // To enable all targets at once
+	//targetAll()
+
+    // To enable targets based on properties/environment variables
+	//targetDefault()
+
+    // To selectively enable targets
+	targetJvm()
+	targetJs()
+    //targetWasmJs()
+	//targetDesktop()
+	//targetIos()
+	//targetAndroid()
+
+	serializationJson()
+}
+
+dependencies {
+    add("commonMainApi", project(":deps"))
+    //add("commonMainApi", project(":korge-dragonbones"))
 }
