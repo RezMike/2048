@@ -22,4 +22,4 @@ buildscript {
 
 apply(plugin = "com.soywiz.korge.settings")
 
-rootProject.name = "2048"
+rootProject.name = "Puzzle2048"

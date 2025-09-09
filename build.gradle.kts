@@ -5,8 +5,8 @@ plugins {
 }
 
 korge {
-    id = "io.github.rezmike.game2048"
-    name = "2048"
+    id = "io.github.rezmike.puzzle2048"
+    name = "Puzzle 2048"
     icon = file("src/commonMain/resources/korge.png")
 
     // To enable all targets at once
@@ -21,7 +21,7 @@ korge {
     //targetWasmJs()
 	//targetDesktop()
 	//targetIos()
-	//targetAndroid()
+	targetAndroid()
 
 	serializationJson()
 }

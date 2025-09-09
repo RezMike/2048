@@ -46,14 +46,14 @@ var isAnimationRunning = false
 var isGameOver = false
 
 suspend fun main(): Unit = Korge(
-    title = "2048",
+    title = "Puzzle 2048",
     backgroundColor = RGBA(253, 247, 240),
     windowSize = Size(
         width = 480,
         height = 640,
     ),
     //gameId is associated with the location of storage, which contains `history` and `best`
-    gameId = "io.github.rezmike.game2048",
+    gameId = "io.github.rezmike.puzzle2048",
 ) {
     font = resourcesVfs["clear_sans.fnt"].readBitmapFont()
 
